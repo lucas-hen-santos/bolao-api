@@ -1,6 +1,5 @@
 from datetime import timedelta
 from typing import Any
-# Adicione Form nas importações
 from fastapi import APIRouter, Depends, HTTPException, status, Response, Request, Body, BackgroundTasks, Form 
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
@@ -22,7 +21,6 @@ def get_db():
     finally:
         db.close()
 
-# ... (Schemas ForgotPassword e ResetPassword mantidos iguais) ...
 class ForgotPassword(BaseModel):
     email: EmailStr
 
@@ -34,7 +32,7 @@ class ResetPassword(BaseModel):
 def login(
     response: Response,
     form_data: OAuth2PasswordRequestForm = Depends(),
-    remember_me: bool = Form(False), # <--- NOVO PARÂMETRO
+    remember_me: bool = Form(False),
     db: Session = Depends(get_db)
 ):
     user = db.query(User).filter(User.email == form_data.username).first()
@@ -63,8 +61,8 @@ def login(
         httponly=True, 
         max_age=1800,
         expires=1800,
-        samesite="lax",
-        secure=False 
+        samesite="none", # Habilita o envio de cookies para domínios diferentes (Vercel -> Render)
+        secure=True      # Exigido pelos navegadores quando samesite="none"
     )
     
     # LÓGICA DO "MANTER CONECTADO"
@@ -76,8 +74,8 @@ def login(
             value=refresh_token, 
             httponly=True, 
             max_age=max_age_refresh, # Define validade
-            samesite="lax",
-            secure=False
+            samesite="none", 
+            secure=True
         )
     else:
         # Sessão: Morre ao fechar o navegador (max_age=None)
@@ -85,15 +83,14 @@ def login(
             key="refresh_token", 
             value=refresh_token, 
             httponly=True, 
-            max_age=None, # <--- ISSO TORNA O COOKIE DE SESSÃO
-            expires=None, # <--- GARANTE COMPATIBILIDADE
-            samesite="lax",
-            secure=False
+            max_age=None, # ISSO TORNA O COOKIE DE SESSÃO
+            expires=None, # GARANTE COMPATIBILIDADE
+            samesite="none", 
+            secure=True
         )
 
     return {"msg": "Login realizado com sucesso", "user_id": user.id}
 
-# ... (Restante do arquivo mantido igual: refresh, logout, forgot-password...) ...
 @router.post("/refresh")
 def refresh_token(request: Request, response: Response, db: Session = Depends(get_db)):
     refresh_token = request.cookies.get("refresh_token")
@@ -124,16 +121,17 @@ def refresh_token(request: Request, response: Response, db: Session = Depends(ge
         value=f"Bearer {new_access_token}", 
         httponly=True, 
         max_age=1800,
-        samesite="lax",
-        secure=False
+        samesite="none", 
+        secure=True
     )
 
     return {"msg": "Token atualizado"}
 
 @router.post("/logout")
 def logout(response: Response):
-    response.delete_cookie("access_token")
-    response.delete_cookie("refresh_token")
+    # Deleção também precisa do samesite="none" e secure=True em cross-domain
+    response.delete_cookie("access_token", samesite="none", secure=True)
+    response.delete_cookie("refresh_token", samesite="none", secure=True)
     return {"msg": "Logout realizado"}
 
 @router.post("/forgot-password")
