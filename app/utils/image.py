@@ -3,14 +3,11 @@ import uuid
 from io import BytesIO
 from fastapi import UploadFile, HTTPException, status
 from PIL import Image
-from nsfw_image_detector import NSFWDetector
-
-# Inicializa o detector uma única vez
-nsfw_detector = NSFWDetector()
 
 async def process_and_validate_image(image: UploadFile, subfolder: str) -> str:
     """
-    Lê a imagem, converte para RGB, valida NSFW e salva no disco.
+    Lê a imagem, converte para RGB e salva no disco.
+    A validação NSFW foi desativada para economizar memória no servidor.
     Retorna o caminho relativo para salvar no banco.
     
     Args:
@@ -31,16 +28,10 @@ async def process_and_validate_image(image: UploadFile, subfolder: str) -> str:
         content = await image.read()
         image_stream = BytesIO(content)
         
-        # 2. Validar Imagem (Integridade + Conversão RGB + NSFW)
+        # 2. Validar Imagem (Integridade + Conversão RGB)
         # Importante: .convert("RGB") evita erro com imagens Grayscale ou PNGs transparentes
         pil_image = Image.open(image_stream).convert("RGB")
         
-        if nsfw_detector.is_nsfw(pil_image):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="A imagem contém conteúdo impróprio e foi bloqueada."
-            )
-
         # 3. Salvar Arquivo
         # Forçamos a extensão .jpg ou mantemos a original se for segura
         file_ext = os.path.splitext(image.filename)[1] or ".jpg"
