@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div style="text-align: center; margin-bottom: 30px;">
+        <span style="background-color: #581c87; color: #d8b4fe; padding: 5px 15px; border-radius: 4px; font-size: 12px; font-weight: bold; text-transform: uppercase; border: 1px solid #7e22ce;">
+            ⚔️ Desafio Recebido
+        </span>
+    </div>
+
+    <h2 style="color: #ffffff; font-size: 24px; margin-top: 0; text-align: center;">Você foi desafiado!</h2>
+    
+    <p style="text-align: center; font-size: 18px; color: #d4d4d8;">
+        <strong>{{ challenger_name }}</strong> quer te enfrentar no 1x1.
+    </p>
+
+    <div style="background-color: #27272a; border-radius: 8px; padding: 20px; margin: 30px 0; text-align: center; border: 1px solid #3f3f46;">
+        <p style="margin: 0; color: #a1a1aa; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; font-weight: bold;">Grande Prêmio</p>
+        <p style="margin: 5px 0 0 0; color: #ffffff; font-size: 20px; font-weight: bold;">{{ race_name }}</p>
+    </div>
+
+    <p style="text-align: center; color: #71717a; font-size: 14px;">
+        Vai encarar ou vai amarelar? O resultado vale apenas pela resenha (não afeta o campeonato oficial).
+    </p>
+
+    <div style="text-align: center; margin-top: 30px;">
+        <a href="{{ link }}" style="background-color: #9333ea; color: #ffffff; text-decoration: none; padding: 15px 40px; border-radius: 50px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; display: inline-block; box-shadow: 0 4px 15px rgba(147, 51, 234, 0.4);">
+            ACEITAR DESAFIO
+        </a>
+    </div>
+{% endblock %}

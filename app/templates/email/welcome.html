@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h2 style="color: #ffffff; font-size: 24px; margin-top: 0;">Bem-vindo ao Grid, {{ name }}! 🏁</h2>
+    
+    <p>Estamos felizes em ver você no paddock. Sua conta de piloto foi criada com sucesso.</p>
+    
+    <p>Agora você pode:</p>
+    <ul style="color: #a1a1aa;">
+        <li>Criar ou entrar em uma <strong>Escuderia</strong>.</li>
+        <li>Fazer palpites nas corridas da temporada.</li>
+        <li>Disputar o ranking mundial.</li>
+    </ul>
+
+    <div style="text-align: center; margin: 40px 0;">
+        <a href="{{ dashboard_link }}" style="background-color: #ef4444; color: #ffffff; text-decoration: none; padding: 15px 30px; border-radius: 50px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; display: inline-block;">
+            Ir para a Plataforma
+        </a>
+    </div>
+
+    <p style="border-left: 4px solid #ef4444; padding-left: 15px; background-color: #27272a; padding: 15px; border-radius: 0 8px 8px 0; margin-top: 30px;">
+        <strong style="color: #fff;">Dica do Engenheiro:</strong> Fique atento aos horários de fechamento das apostas para não ficar da disputa do titúlo!
+    </p>
+{% endblock %}
