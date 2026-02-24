@@ -17,19 +17,18 @@ def get_db() -> Generator:
 
 def get_current_user(request: Request, db: Session = Depends(get_db)) -> User:
     """
-    Lê o cookie 'access_token', decodifica e busca o usuário.
+    Lê o cabeçalho 'Authorization', extrai o token e busca o usuário.
     """
-    token_str = request.cookies.get("access_token")
+    auth_header = request.headers.get("Authorization")
     
-    if not token_str:
+    if not auth_header:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Não autenticado (Cookie ausente)",
+            detail="Não autenticado (Cabeçalho Authorization ausente)",
         )
 
-    # O token vem como "Bearer eyJhbGci..."
     try:
-        scheme, token = token_str.split()
+        scheme, token = auth_header.split()
         if scheme.lower() != "bearer":
             raise HTTPException(status_code=401, detail="Formato de token inválido")
             

@@ -28,9 +28,11 @@ class ResetPassword(BaseModel):
     token: str
     new_password: str
 
+class RefreshTokenRequest(BaseModel):
+    refresh_token: str
+
 @router.post("/login")
 def login(
-    response: Response,
     form_data: OAuth2PasswordRequestForm = Depends(),
     remember_me: bool = Form(False),
     db: Session = Depends(get_db)
@@ -42,63 +44,32 @@ def login(
     if not user.is_active:
         raise HTTPException(status_code=400, detail="Usuário inativo")
 
-    # Access Token: Sempre curto (30 min)
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = security.create_access_token(
         subject=user.id, expires_delta=access_token_expires
     )
     
-    # Refresh Token: Longo (7 dias)
     refresh_token_expires = timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
     refresh_token = security.create_refresh_token(
         subject=user.id, expires_delta=refresh_token_expires
     )
 
-    # Cookie de Acesso (Sempre expira rápido)
-    response.set_cookie(
-        key="access_token", 
-        value=f"Bearer {access_token}", 
-        httponly=True, 
-        max_age=1800,
-        expires=1800,
-        samesite="none", # Habilita o envio de cookies para domínios diferentes (Vercel -> Render)
-        secure=True      # Exigido pelos navegadores quando samesite="none"
-    )
-    
-    # LÓGICA DO "MANTER CONECTADO"
-    if remember_me:
-        # Persistente: Dura 7 dias
-        max_age_refresh = settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60
-        response.set_cookie(
-            key="refresh_token", 
-            value=refresh_token, 
-            httponly=True, 
-            max_age=max_age_refresh, # Define validade
-            samesite="none", 
-            secure=True
-        )
-    else:
-        # Sessão: Morre ao fechar o navegador (max_age=None)
-        response.set_cookie(
-            key="refresh_token", 
-            value=refresh_token, 
-            httponly=True, 
-            max_age=None, # ISSO TORNA O COOKIE DE SESSÃO
-            expires=None, # GARANTE COMPATIBILIDADE
-            samesite="none", 
-            secure=True
-        )
-
-    return {"msg": "Login realizado com sucesso", "user_id": user.id}
+    # Devolvemos os tokens no JSON em vez de usar Cookies
+    return {
+        "msg": "Login realizado com sucesso", 
+        "user_id": user.id,
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "token_type": "bearer"
+    }
 
 @router.post("/refresh")
-def refresh_token(request: Request, response: Response, db: Session = Depends(get_db)):
-    refresh_token = request.cookies.get("refresh_token")
-    if not refresh_token:
+def refresh_token(data: RefreshTokenRequest, db: Session = Depends(get_db)):
+    if not data.refresh_token:
         raise HTTPException(status_code=401, detail="Refresh token não encontrado")
 
     try:
-        payload = jwt.decode(refresh_token, settings.SECRET_KEY, algorithms=[security.ALGORITHM])
+        payload = jwt.decode(data.refresh_token, settings.SECRET_KEY, algorithms=[security.ALGORITHM])
         token_type = payload.get("type")
         if token_type != "refresh":
             raise HTTPException(status_code=401, detail="Token inválido")
@@ -116,22 +87,14 @@ def refresh_token(request: Request, response: Response, db: Session = Depends(ge
         subject=user.id, expires_delta=access_token_expires
     )
 
-    response.set_cookie(
-        key="access_token", 
-        value=f"Bearer {new_access_token}", 
-        httponly=True, 
-        max_age=1800,
-        samesite="none", 
-        secure=True
-    )
-
-    return {"msg": "Token atualizado"}
+    return {
+        "msg": "Token atualizado",
+        "access_token": new_access_token,
+        "token_type": "bearer"
+    }
 
 @router.post("/logout")
-def logout(response: Response):
-    # Deleção também precisa do samesite="none" e secure=True em cross-domain
-    response.delete_cookie("access_token", samesite="none", secure=True)
-    response.delete_cookie("refresh_token", samesite="none", secure=True)
+def logout():
     return {"msg": "Logout realizado"}
 
 @router.post("/forgot-password")

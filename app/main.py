@@ -30,10 +30,10 @@ app = FastAPI(
     lifespan=lifespan 
 )
 
-# ... (Resto das configurações de CORS e StaticFiles iguais ao seu original) ...
 origins = [
     "http://localhost:4200",
     "http://localhost:8080",
+    "https://bolao-front-mauve.vercel.app", # Caso não puxe da env corretamente, deixei o link que usamos fixo aqui como garantia
     settings.FRONTEND_URL,
 ]
 origins = list(set(origins))
@@ -59,3 +59,17 @@ app.include_router(api_router, prefix=settings.API_V1_STR)
 @app.get("/")
 def root():
     return {"message": "API do Bolão F1 está rodando com Scheduler (Brasília) Ativo!"}
+
+# --- ROTA PARA O UPTIME ROBOT ---
+@app.get("/ping")
+def ping():
+    """
+    Rota ultra leve para manter o servidor do Render acordado.
+    Configure o UptimeRobot para bater aqui a cada 10-14 minutos.
+    """
+    return {"status": "ok", "message": "pong"}
+
+@app.head("/")
+@app.head("/ping")
+def ping_head():
+    return ""
