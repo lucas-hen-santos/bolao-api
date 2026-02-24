@@ -1,6 +1,7 @@
 from apscheduler.schedulers.background import BackgroundScheduler
 from sqlalchemy.orm import Session
-from datetime import datetime, timezone
+from datetime import datetime
+import pytz
 import logging
 import asyncio
 
@@ -11,14 +12,15 @@ from app.models.user import User
 logger = logging.getLogger(__name__)
 scheduler = BackgroundScheduler()
 
-def get_utc_time():
-    """Retorna a hora atual em UTC limpa para bater com o Supabase."""
-    return datetime.now(timezone.utc).replace(tzinfo=None)
+def get_brazil_time():
+    """Pega a hora exata de Brasília e remove o fuso para comparar perfeitamente com os valores do banco."""
+    br_tz = pytz.timezone('America/Sao_Paulo')
+    return datetime.now(br_tz).replace(tzinfo=None)
 
 def check_race_status_job():
     """Verifica status das corridas e envia notificações (Push + Email)"""
     
-    # ✅ IMPORTAÇÃO TARDIA (Essencial para não travar o servidor)
+    # IMPORTAÇÃO TARDIA
     from app.services.push import PushService
     from app.services.email import EmailService
     
@@ -28,8 +30,7 @@ def check_race_status_job():
     email_service = EmailService()
     
     try:
-        # ✅ AQUI ESTAVA O ERRO! CORRIGIDO PARA get_utc_time()
-        now = get_utc_time()
+        now = get_brazil_time()
         
         # --- 1. ABERTURA (Scheduled -> Open) ---
         races_to_open = db.query(Race).filter(
@@ -76,7 +77,6 @@ def check_race_status_job():
         # --- 3. ALERTAS DE TEMPO (1h e 5min) ---
         open_races = db.query(Race).filter(Race.status == RaceStatus.OPEN).all()
         
-        # Carrega e-mails uma vez
         active_emails = []
         if open_races:
             users = db.query(User).filter(User.is_active == True).all()

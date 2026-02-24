@@ -1,8 +1,6 @@
 from typing import List, Optional, Any
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
-from datetime import timezone
-import pytz
 
 from app.api import deps
 from app.models.race import Race, RaceStatus
@@ -11,20 +9,11 @@ from app.schemas.race import RaceCreate, RaceUpdate, RaceResponse as RaceSchema,
 
 router = APIRouter()
 
-def force_utc(dt):
-    """
-    Força a data para UTC de forma segura. 
-    Se a data vier sem fuso (como acontece no input do Angular), 
-    assume que o usuário digitou no horário de Brasília antes de converter.
-    """
+def strip_tz(dt):
+    """Pega a data exata que veio do front-end e garante que não tem fuso, salvando o valor cru."""
     if not dt:
         return dt
-    if dt.tzinfo is None:
-        br_tz = pytz.timezone('America/Sao_Paulo')
-        # Localiza a data como sendo de Brasília
-        dt = br_tz.localize(dt)
-    # Converte para UTC (somando as 3 horas) e tira o fuso para salvar limpo no BD
-    return dt.astimezone(timezone.utc).replace(tzinfo=None)
+    return dt.replace(tzinfo=None)
 
 # --- 1. Endpoints Auxiliares ---
 
@@ -54,17 +43,12 @@ def create_race(
     if not active_season:
         raise HTTPException(status_code=400, detail="Nenhuma temporada ativa encontrada.")
 
-    # Converte tudo para o horário universal (UTC) antes de salvar
-    race_date_utc = force_utc(race_in.race_date)
-    open_at_utc = force_utc(race_in.bets_open_at)
-    close_at_utc = force_utc(race_in.bets_close_at)
-
     race = Race(
         name=race_in.name,
         country=race_in.country,
-        race_date=race_date_utc,
-        bets_open_at=open_at_utc,
-        bets_close_at=close_at_utc,
+        race_date=strip_tz(race_in.race_date),
+        bets_open_at=strip_tz(race_in.bets_open_at),
+        bets_close_at=strip_tz(race_in.bets_close_at),
         season_id=active_season.id,
         status=RaceStatus.SCHEDULED
     )
@@ -84,13 +68,12 @@ def update_race_details(
     if not race:
         raise HTTPException(status_code=404, detail="Corrida não encontrada")
     
-    # Se os campos vierem preenchidos, faz a conversão correta
     if race_in.race_date:
-        race_in.race_date = force_utc(race_in.race_date)
+        race_in.race_date = strip_tz(race_in.race_date)
     if race_in.bets_open_at:
-        race_in.bets_open_at = force_utc(race_in.bets_open_at)
+        race_in.bets_open_at = strip_tz(race_in.bets_open_at)
     if race_in.bets_close_at:
-        race_in.bets_close_at = force_utc(race_in.bets_close_at)
+        race_in.bets_close_at = strip_tz(race_in.bets_close_at)
     
     update_data = race_in.dict(exclude_unset=True)
     for field, value in update_data.items():
