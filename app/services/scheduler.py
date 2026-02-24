@@ -1,7 +1,6 @@
 from apscheduler.schedulers.background import BackgroundScheduler
 from sqlalchemy.orm import Session
-from datetime import datetime, timedelta
-import pytz
+from datetime import datetime, timezone
 import logging
 import asyncio
 
@@ -9,16 +8,12 @@ from app.db.session import SessionLocal
 from app.models.race import Race, RaceStatus
 from app.models.user import User
 
-# Configuração de Logs
 logger = logging.getLogger(__name__)
-
-# Inicializa o agendador
 scheduler = BackgroundScheduler()
 
-def get_brazil_time():
-    """Retorna a data/hora atual de Brasília (naive) para comparar com o banco."""
-    tz = pytz.timezone('America/Sao_Paulo')
-    return datetime.now(tz).replace(tzinfo=None)
+def get_utc_time():
+    """Retorna a hora atual em UTC limpa para bater com o Supabase."""
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 def check_race_status_job():
     """Verifica status das corridas e envia notificações (Push + Email)"""

@@ -1,10 +1,11 @@
 from typing import List, Optional, Any
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
+from datetime import timezone
+
 from app.api import deps
 from app.models.race import Race, RaceStatus
 from app.models.season import Season, RealDriver, RealTeam
-# ✅ CORREÇÃO: Importar RaceResponse como RaceSchema
 from app.schemas.race import RaceCreate, RaceUpdate, RaceResponse as RaceSchema, RaceStatus as RaceStatusEnum
 
 router = APIRouter()
@@ -37,6 +38,14 @@ def create_race(
     if not active_season:
         raise HTTPException(status_code=400, detail="Nenhuma temporada ativa encontrada.")
 
+    # Converter datas para UTC para salvar no banco
+    if race_in.race_date and race_in.race_date.tzinfo:
+        race_in.race_date = race_in.race_date.astimezone(timezone.utc).replace(tzinfo=None)
+    if race_in.bets_open_at and race_in.bets_open_at.tzinfo:
+        race_in.bets_open_at = race_in.bets_open_at.astimezone(timezone.utc).replace(tzinfo=None)
+    if race_in.bets_close_at and race_in.bets_close_at.tzinfo:
+        race_in.bets_close_at = race_in.bets_close_at.astimezone(timezone.utc).replace(tzinfo=None)
+
     race = Race(
         name=race_in.name,
         country=race_in.country,
@@ -61,6 +70,14 @@ def update_race_details(
     race = db.query(Race).filter(Race.id == race_id).first()
     if not race:
         raise HTTPException(status_code=404, detail="Corrida não encontrada")
+    
+    # Converter datas para UTC para salvar no banco se vierem na requisição
+    if race_in.race_date and race_in.race_date.tzinfo:
+        race_in.race_date = race_in.race_date.astimezone(timezone.utc).replace(tzinfo=None)
+    if race_in.bets_open_at and race_in.bets_open_at.tzinfo:
+        race_in.bets_open_at = race_in.bets_open_at.astimezone(timezone.utc).replace(tzinfo=None)
+    if race_in.bets_close_at and race_in.bets_close_at.tzinfo:
+        race_in.bets_close_at = race_in.bets_close_at.astimezone(timezone.utc).replace(tzinfo=None)
     
     update_data = race_in.dict(exclude_unset=True)
     for field, value in update_data.items():
