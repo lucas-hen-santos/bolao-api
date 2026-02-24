@@ -28,7 +28,8 @@ def check_race_status_job():
     email_service = EmailService()
     
     try:
-        now = get_brazil_time()
+        # ✅ AQUI ESTAVA O ERRO! CORRIGIDO PARA get_utc_time()
+        now = get_utc_time()
         
         # --- 1. ABERTURA (Scheduled -> Open) ---
         races_to_open = db.query(Race).filter(
