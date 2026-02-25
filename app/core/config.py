@@ -17,15 +17,16 @@ class Settings(BaseSettings):
     BACKEND_URL: str
 
     # --- CONFIGURAÇÕES DE EMAIL ---
-    # Note que removemos os valores padrão das senhas.
-    # Agora o Pydantic vai ler do .env. Se não achar, vai dar erro ao iniciar (o que é bom/seguro).
     MAIL_USERNAME: str
     MAIL_PASSWORD: str
     MAIL_FROM: str
-    MAIL_PORT: int = 587
+    
+    # CONFIGURAÇÕES FIXAS (Para evitar erros de conversão do Render)
+    MAIL_PORT: int = 465
     MAIL_SERVER: str = "smtp.gmail.com"
-    MAIL_STARTTLS: bool = True
-    MAIL_SSL_TLS: bool = False
+    MAIL_STARTTLS: bool = False
+    MAIL_SSL_TLS: bool = True
+    
     USE_CREDENTIALS: bool = True
     VALIDATE_CERTS: bool = True
 
@@ -36,7 +37,6 @@ class Settings(BaseSettings):
 
     class Config:
         env_file = ".env"
-        # Case sensitive = True é opcional, mas ajuda a evitar erros de digitação
         case_sensitive = True 
 
 settings = Settings()
