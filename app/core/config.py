@@ -1,5 +1,4 @@
 from pydantic_settings import BaseSettings
-from typing import Optional
 
 class Settings(BaseSettings):
     # --- GERAIS ---
@@ -20,12 +19,10 @@ class Settings(BaseSettings):
     MAIL_USERNAME: str
     MAIL_PASSWORD: str
     MAIL_FROM: str
-    
-    # CONFIGURAÇÕES FIXAS (Para evitar erros de conversão do Render)
-    MAIL_PORT: int = 465
-    MAIL_SERVER: str = "smtp.gmail.com"
-    MAIL_STARTTLS: bool = False
-    MAIL_SSL_TLS: bool = True
+    MAIL_SERVER: str
+    MAIL_PORT: int
+    MAIL_STARTTLS: bool = True
+    MAIL_SSL_TLS: bool = False
     
     USE_CREDENTIALS: bool = True
     VALIDATE_CERTS: bool = True
