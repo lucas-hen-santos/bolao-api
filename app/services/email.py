@@ -95,12 +95,16 @@ class EmailService:
         
         await self.fm.send_message(message, template_name="reset_password.html")
 
-    async def send_new_challenge_email(self, opponent_email: str, challenger_name: str, race_name: str):
+    async def send_new_challenge_email(self, opponent_email: str, challenger_name: str, race_name: str, challenger_photo: str = None):
         """Notifica o oponente sobre um novo desafio"""
+        if challenger_photo and not challenger_photo.startswith('http'):
+            challenger_photo = f"{settings.BACKEND_URL}{challenger_photo}"
+            
         body_data = {
             "challenger_name": challenger_name,
             "race_name": race_name,
-            "link": f"{settings.FRONTEND_URL}/rivals"
+            "link": f"{settings.FRONTEND_URL}/rivals",
+            "challenger_photo": challenger_photo
         }
         message = MessageSchema(
             subject=f"⚔️ Desafio de {challenger_name}!",
@@ -110,12 +114,16 @@ class EmailService:
         )
         await self.fm.send_message(message, template_name="new_challenge.html")
 
-    async def send_challenge_accepted_email(self, challenger_email: str, opponent_name: str, race_name: str):
+    async def send_challenge_accepted_email(self, challenger_email: str, opponent_name: str, race_name: str, opponent_photo: str = None):
         """Notifica o desafiante que o duelo foi aceito"""
+        if opponent_photo and not opponent_photo.startswith('http'):
+            opponent_photo = f"{settings.BACKEND_URL}{opponent_photo}"
+            
         body_data = {
             "opponent_name": opponent_name,
             "race_name": race_name,
-            "link": f"{settings.FRONTEND_URL}/rivals"
+            "link": f"{settings.FRONTEND_URL}/rivals",
+            "opponent_photo": opponent_photo
         }
         message = MessageSchema(
             subject=f"🔥 {opponent_name} aceitou seu desafio!",

@@ -68,6 +68,7 @@ def create_challenge(
         opponent_id=rivalry_in.opponent_id,
         race_id=next_race.id,
         status=RivalryStatus.PENDING
+        
     )
     db.add(rivalry)
     db.commit()
@@ -81,7 +82,8 @@ def create_challenge(
             email_service.send_new_challenge_email,
             opponent.email,
             current_user.full_name,
-            next_race.name
+            next_race.name,
+            challenger_photo=current_user.profile_image_url
         )
     # ---------------------------------------
 
@@ -117,7 +119,8 @@ def accept_challenge(
             email_service.send_challenge_accepted_email,
             challenger.email,
             current_user.full_name, # Quem aceitou
-            race.name
+            race.name,
+            opponent_photo=current_user.profile_image_url
         )
     # ---------------------------------------
 
